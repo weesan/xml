@@ -18,7 +18,7 @@ $ src/prettyxml tests/test.xml
 
 ## To parse the Wikipedia XML
 
-Since the [Wikipedia|https://www.wikipedia.org/] XML is huge (as of
+Since the [Wikipedia](https://www.wikipedia.org/) XML is huge (as of
 this writing, ~18GB compressed and ~76GB uncompressed), it's very
 challenging to find the desired articles in an efficient matter.  To
 speed up, you may use `index_wiki` to index the Wikipedia XML, which
