@@ -29,19 +29,19 @@ which in turn, will tell you the location and length of the documents.
 ### Download the Wikipedia XML
 
 ```
-$ wget https://dumps.wikimedia.org/enwiki/20200220/enwiki-20200220-pages-articles-multistream.xml.bz2
+$ wget https://dumps.wikimedia.org/enwiki/20200301/enwiki-20200301-pages-articles-multistream.xml.bz2
 ```
 
 ### Uncompress the Wikipedia XML
 
 ```
-$ bzip2 -d enwiki-20200220-pages-articles-multistream.xml.bz2
+$ bzip2 -d enwiki-20200301-pages-articles-multistream.xml.bz2
 ```
 
 ### Index the Wikipedia XML
 
 ```
-$ src/index_wiki < enwiki-20200220-pages-articles-multistream.xml > enwiki-20200220-pages-articles-multistream.idx
+$ src/index_wiki < enwiki-20200301-pages-articles-multistream.xml > enwiki-20200301-pages-articles-multistream.idx
 ```
 
 *Note*: This may take up to a couple of hours depending upon the type of
@@ -50,16 +50,17 @@ machine you have.
 ### Search for the topic
 
 ```
-$ grep 'Xiaomi Mi 9 Pro' enwiki-20200220-pages-articles-multistream.idx | jq .
+$ grep 'Motorola Razr (2020)' enwiki-20200301-pages-articles-multistream.idx | jq .
 {
-  "offset": 74594946050,
-  "length": 5827,
-  "title": "Xiaomi Mi 9 Pro",
+  "offset": 74841758563,
+  "length": 12540,
+  "title": "Motorola Razr (2020)",
   "category": [
-    "Android (operating system) devices",
-    "Smartphones",
+    "Motorola mobile phones",
     "Mobile phones introduced in 2019",
-    "Xiaomi"
+    "Smartphones",
+    "Android (operating system) devices",
+    "Flexible displays"
   ]
 }
 ```
@@ -70,19 +71,44 @@ Base on the `offset` and `length` above, you may use the `dd` command
 to retrieve the content of the topic.
 
 ```
-$ dd skip=74594946050 count=5827 bs=1 if=enwiki-20200220-pages-articles-multistream.xml of=xiaomi_mi_9_pro.xml
-$ cat xiaomi_mi_9_pro.xml
+
+$ dd skip=74841758563 count=12540 bs=1 if=enwiki-20200301-pages-articles-multistream.xml of=moto_razr_2020.xml
+12540+0 records in
+12540+0 records out
+12540 bytes (13 kB, 12 KiB) copied, 0.0680268 s, 184 kB/s
+
+$ cat moto_razr_2020.xml
+<page>
+    <title>Motorola Razr (2020)</title>
+    <ns>0</ns>
+    <id>62155189</id>
+...
+  </page>
 ```
 
 ### Using the scripts to retrieve the content of the topic
 
 ```
-$ scripts/search_wiki.sh 'Mobile phones introduced in 2019' enwiki-20200220-pages-articles-multistream.xml
+$ scripts/search_wiki.sh 'Motorola Razr (2020)' enwiki-20200301-pages-articles-multistream.xml > moto_razr_2020.xml
+$ cat moto_razr_2020.xml
+  <page>
+    <title>Motorola Razr (2020)</title>
+    <ns>0</ns>
+    <id>62155189</id>
+  ...
+  </page>
 ```
 
 If you prefer a search with case insensitive, you may use `-i` as
 follows instead:
 
 ```
-$ scripts/search_wiki.sh -i 'Mobile phones introduced in 2019' enwiki-20200220-pages-articles-multistream.xml
+$ scripts/search_wiki.sh -i 'Motorola Razr (2020)' enwiki-20200301-pages-articles-multistream.xml > moto_razr_2020.xml
+$ cat moto_razr_2020.xml
+  <page>
+    <title>Motorola Razr (2020)</title>
+    <ns>0</ns>
+    <id>62155189</id>
+  ...
+  </page>
 ```
