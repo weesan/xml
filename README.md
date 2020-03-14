@@ -73,3 +73,16 @@ to retrieve the content of the topic.
 $ dd skip=74594946050 count=5827 bs=1 if=enwiki-20200220-pages-articles-multistream.xml of=xiaomi_mi_9_pro.xml
 $ cat xiaomi_mi_9_pro.xml
 ```
+
+### Using the scripts to retrieve the content of the topic
+
+```
+$ scripts/search_wiki.sh 'Mobile phones introduced in 2019' enwiki-20200220-pages-articles-multistream.xml
+```
+
+If you prefer a search with case insensitive, you may use `-i` as
+follows instead:
+
+```
+$ scripts/search_wiki.sh -i 'Mobile phones introduced in 2019' enwiki-20200220-pages-articles-multistream.xml
+```
