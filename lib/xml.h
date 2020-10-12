@@ -35,7 +35,7 @@ private:
 private:
     const string startTag(int indent, bool emptyElement = false) const {
         stringstream ss;
-        
+
         ss << string(indent, ' ').c_str() << '<' << tag();
 	if (_attrs.size()) {
 	    for (int i = 0; i < _attrs.size(); i++) {
@@ -123,7 +123,7 @@ public:
                 os << startTag(indent) << content() << endTag() << endl;
             }
         }
-        
+
         return os;
     }
     Element &lookup(const string &key) {
@@ -140,6 +140,7 @@ class Xml : public Element {
 private:
     Element *_current;                // The current tag during parsing.
     XML_CB *_startTagCB, *_endTagCB;  // Various callback functions.
+    bool _debug;
 
 private:
     void traverse(bool (*cb)(Element &, void *),
@@ -155,10 +156,14 @@ private:
     }
 
 public:
-    Xml(XML_CB *startTagCB = NULL, XML_CB *endTagCB = NULL) :
+    Xml(XML_CB *startTagCB = NULL, XML_CB *endTagCB = NULL, bool debug = false):
         _current(this),
         _startTagCB(startTagCB),
-        _endTagCB(endTagCB) {
+        _endTagCB(endTagCB),
+        _debug(debug) {
+    }
+    bool debug(void) const {
+        return _debug;
     }
     void parse(void) {
 	extern int parseXml(Xml &xml);
@@ -174,13 +179,11 @@ public:
     void up(void) {
         _current = _current->parent();
     }
-    Element &addChild(const char *tag, uint64_t offset, bool startTag) {
+    Element &addChild(const char *tag, uint64_t offset) {
         _current->push_back(Element(_current, tag, offset));
 	// Set current to be newly added element.
         Element &e = _current->back();
-        if (startTag) {
-            _current = &e;
-        }
+        _current = &e;
         return e;
     }
     void addContent(const char *content) {
@@ -199,13 +202,17 @@ public:
 	}
     }
     void startTag(void) {
-        //printf("Start tag\n");
+        if (_debug) {
+            fprintf(stderr, "Start tag callback\n");
+        }
         if (_startTagCB) {
             _startTagCB(*_current, NULL);
         }
     }
     void endTag(void) {
-        //printf("End tag\n");
+        if (_debug) {
+            fprintf(stderr, "End tag callback\n");
+        }
         if (_endTagCB) {
             _endTagCB(*_current, NULL);
         }

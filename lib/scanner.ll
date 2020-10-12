@@ -32,10 +32,14 @@ using namespace std;
 #define YY_DECL int parseXml(Xml &xml)
 
 static unsigned long long offset = 0;
- 
+
 static void
-parse_tag (Xml &xml, char *tag, unsigned long long offset, bool startTag)
+handle_start_tag (Xml &xml, char *tag, unsigned long long offset)
 {
+    if (xml.debug()) {
+        fprintf(stderr, "Handled start tag: %s\n", tag);
+    }
+
     int count = 0;
 
     char *attr = strchr(tag, ' ');
@@ -43,20 +47,16 @@ parse_tag (Xml &xml, char *tag, unsigned long long offset, bool startTag)
 	*attr++ = 0;
     }
 
-    //printf("tag = [%s]\n", tag);
     // Create and add a new child tag to the current element.
-    Element &e = xml.addChild(tag, offset - strlen(tag) - 2, startTag);
-    if (startTag) {
-        xml.startTag();
-    } else {
-        // Not working with <foobar /> tag.
-        //xml.endTag();
-    }
+    Element &e = xml.addChild(tag, offset - strlen(tag) - 2);
+
+    // Make the callback if provided.
+    xml.startTag();
 
     if (!attr) {
         return;
     }
-    
+
     // Parse the attributes if any.
     char key[256], value[8192];
     while (attr) {
@@ -81,8 +81,21 @@ parse_tag (Xml &xml, char *tag, unsigned long long offset, bool startTag)
             }
         }
         e.attrs().push_back(make_pair(key, value));
-        //printf("[%s] - [%s]\n", key, value);
+        if (xml.debug()) {
+            fprintf(stderr, "Attr: %s=%s\n", key, value);
+        }
     }
+}
+
+static void
+handle_end_tag (Xml &xml, char *tag, unsigned long long offset) {
+    if (xml.debug()) {
+        fprintf(stderr, "Handled close tag: %s\n", tag);
+    }
+
+    xml.updateLength(offset);
+    xml.endTag();
+    xml.up();
 }
 
 %}
@@ -107,35 +120,43 @@ ws  [ \t]+
 <TAG>[^>]+> {
     int len = strlen(yytext);
     offset += len;
-    
+
     // Get rid of the last char, ie. '>'
     yytext[--len] = 0;
 
     // Check for <?, </, etc.
     switch (yytext[0]) {
     case '?':
-        //printf("Meta tag: [%s]\n", yytext);
+        if (xml.debug()) {
+            fprintf(stderr, "Meta tag: [%s]\n", yytext);
+        }
 	xml.reset();
 	BEGIN INITIAL;
 	break;
     case '/': {
-	//char *s = yytext + 1;
-        //printf("End tag: [%s]\n", yytext);
-        xml.updateLength(offset);
-        xml.endTag();
-	xml.up();
+        if (xml.debug()) {
+            fprintf(stderr, "End tag: [%s]\n", yytext);
+        }
+
+        handle_end_tag(xml, yytext + 1, offset);
 	BEGIN INITIAL;
 	break;
     }
     default:
 	if (yytext[len - 1] == '/') {
-            //printf("Empty-element tag  : [%s]\n", yytext);
+            if (xml.debug()) {
+                fprintf(stderr, "Empty-element tag  : [%s]\n", yytext);
+            }
             yytext[--len] = 0;
-	    parse_tag(xml, yytext, offset, false);
+
+            // Since an empty-element tag is both a start and end tag,
+            // we will call both handlers.
+
+	    handle_start_tag(xml, yytext, offset);
+            handle_end_tag(xml, yytext, offset);
 	    BEGIN INITIAL;
 	} else {
-            //printf("Start tag: [%s]\n", yytext);
-	    parse_tag(xml, yytext, offset, true);
+	    handle_start_tag(xml, yytext, offset);
 	    BEGIN CONTENT;
 	}
 	break;
@@ -149,11 +170,13 @@ ws  [ \t]+
 
 <CONTENT>[^<]+ {
     offset += strlen(yytext);
-    
+
     char *s = yytext;
     while (*s && (*s == ' ' || *s == '\n')) s++;
     if (*s) {
-	//printf("Content:     [%s]\n", yytext);
+        if (xml.debug()) {
+            fprintf(stderr, "Content:     [%s]\n", yytext);
+        }
 	xml.addContent(yytext);
     }
     BEGIN INITIAL;
@@ -161,7 +184,7 @@ ws  [ \t]+
 
 <CONTENT>"<![CDATA[" {
     offset += strlen(yytext);
-    
+
     xml.addContent(yytext);
     BEGIN CDATA;
 }
