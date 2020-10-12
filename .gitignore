@@ -1,4 +1,5 @@
 *~
+*.a
 *.o
 autom4te.cache/
 Makefile
@@ -6,8 +7,12 @@ config.h
 config.log
 config.status
 core
+lib/.deps/
+lib/scanner.cc
 src/.deps/
 src/Makefile
+src/index_wiki
+src/prettyxml
 stamp-h1
 tests/.deps/
 tests/Makefile
